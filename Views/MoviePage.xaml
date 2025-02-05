@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Admin.Views.FilmsPage"
+             xmlns:models="clr-namespace:Admin.Models"
+             xmlns:vm="clr-namespace:Admin.ViewModels"
+             Title="FilmsPage">
+
+    <ContentPage.BindingContext>
+        <x:Static Member="vm:MovieViewModel.Instance"/>
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <CollectionView ItemsSource="{Binding Movies}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Movie">
+                    <Frame>
+                        <StackLayout Padding="3">
+                            <Image Source="{Binding Photo}"/>
+                            <Entry Placeholder="Title" Text="{Binding Title}"/>
+                            <Entry Placeholder="ReleaseYear" Text="{Binding Release_Year}" Keyboard="Numeric"/>
+                            <Entry Placeholder="Duration" Text="{Binding Duration}" Keyboard="Numeric"/>
+                            <Entry Placeholder="Description" Text="{Binding Description}"/>
+
+                            <Picker Title="Выберите Студию"
+                                    ItemsSource="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=Studios}"
+                                    SelectedItem="{Binding Studio, Mode=TwoWay}"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    SelectedIndex="{Binding StudioIndex, Mode=TwoWay}"/>
+
+                            <Picker Title="Выберите Возрастной рейтинг"
+                                    ItemsSource="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=AgeRatings}"
+                                    SelectedItem="{Binding age_rating, Mode=TwoWay}"
+                                    ItemDisplayBinding="{Binding Age}"
+                                    SelectedIndex="{Binding AgeRatingIndex, Mode=TwoWay}"/>
+
+                            <Grid ColumnDefinitions="*,0.05*,*,0.05*,*" Padding="10">
+                                <Button Text="Сохранить" Command="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=AddMoviesCommand}"
+                                        CommandParameter="{Binding}"/>
+                                <Button Text="+" Grid.Column="2" 
+                                        Command="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=AddMoviesPhotoCommand}"
+                                        CommandParameter="{Binding}"/>
+                                <Button Text="Удалить" Grid.Column="4"
+                                        Command="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=DeleteMovieCommand}"
+                                        CommandParameter="{Binding}"/>
+                            </Grid>
+                        </StackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </ScrollView>
+</ContentPage>
