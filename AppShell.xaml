@@ -10,8 +10,21 @@
 
     <TabBar>
         <ShellContent 
-            Title="Создание"
+            Icon="Resourcec//studio_icon.png"
+            Title="Студии"
+            ContentTemplate="{DataTemplate view:StudioPage }"/>
+        <ShellContent 
+            Icon="Resourcec//films_icon.png"
+            Title="Фильмы"
             ContentTemplate="{DataTemplate view:FilmsPage }"/>
+        <ShellContent 
+            Icon="Resourcec//actor_icon.png"
+            Title="Актеры"
+            ContentTemplate="{DataTemplate view:ActorPage}"/>
+        <ShellContent 
+            Icon="Resourcec//user_icon.png"
+            Title="Отзывы"
+            ContentTemplate="{DataTemplate view:RatingPage }"/>
     </TabBar>
 
 </Shell>

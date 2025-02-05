@@ -18,7 +18,7 @@ public class ApiClient
     static private readonly HttpClient _httpClient;
     static private string? _token;
     static public bool Auth { get; private set; } = false;
-    static public string baseUrl = "https://85d71e54-71a2-4eb1-9aa1-07f36ca62967.tunnel4.com";
+    static public string baseUrl = "https://e49a2f2d-40ad-439e-a9c7-254f63886ec6.tunnel4.com";
 
     static ApiClient()
     {
@@ -231,13 +231,15 @@ public class ApiClient
         return await GetAuthorizedAsync<Movie>($"/api/movies/{movieId}");
     }
 
-    public async Task<Movie?> UpdateMovie(int movieId, Movie movie, string filePath)
+    public async Task<Movie?> UpdateMovie(Movie movie)
     {
         if (!Auth)
         {
             Console.WriteLine("[Ошибка] Пользователь не аутентифицирован.");
             throw new UnauthorizedAccessException("User is not authenticated.");
         }
+
+        string filePath = movie.Photo;
 
         using var formData = new MultipartFormDataContent();
         FileStream fileStream = null;
@@ -253,10 +255,21 @@ public class ApiClient
             formData.Add(new StringContent(movie.age_rating.Id.ToString()), "age_rating_id");
             Console.WriteLine("[Отладка] Текстовые данные успешно добавлены.");
 
-            //
+            if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+            {
+                Console.WriteLine($"[Отладка] Загружаем файл: {filePath}");
+                fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var streamContent = new StreamContent(fileStream);
+                formData.Add(streamContent, "photo", Path.GetFileName(filePath));
+                Console.WriteLine("[Отладка] Файл добавлен в форму данных.");
+            }
+            else
+            {
+                Console.WriteLine("[Предупреждение] Файл не найден или путь пуст. Фильм будет обновлён без изменения изображения.");
+            }
 
             Console.WriteLine("[Отладка] Отправляем HTTP-запрос...");
-            var response = await _httpClient.PostAsync($"/api/movies/update/{movieId}", formData);
+            var response = await _httpClient.PostAsync($"/api/movies/update/{movie.Id}", formData);
 
             if (fileStream != null)
             {
@@ -294,56 +307,12 @@ public class ApiClient
         }
     }
 
-    public async Task UpdateMovie(Movie movie, string filePath)
-    {
-        if (!Auth)
-        {
-            Console.WriteLine("[Ошибка] Пользователь не аутентифицирован.");
-            throw new UnauthorizedAccessException("User is not authenticated.");
-        }
-
-        using var formData = new MultipartFormDataContent();
-
-        try
-        {
-            Console.WriteLine("[Отладка] Добавляем текстовые данные фильма...");
-            formData.Add(new StringContent(movie.Title), "title");
-            formData.Add(new StringContent(movie.Release_Year.ToString()), "release_year");
-            formData.Add(new StringContent(movie.Duration.ToString()), "duration");
-            formData.Add(new StringContent(movie.Description), "description");
-            formData.Add(new StringContent(movie.Studio.Id.ToString()), "studio_id");
-            formData.Add(new StringContent(movie.age_rating.Id.ToString()), "age_rating_id");
-            Console.WriteLine("[Отладка] Текстовые данные успешно добавлены.");
-
-            try
-            {
-                var photoContent = await GetPhotoContentAsync(filePath);
-                //formData.Add(photoContent, "photo", Path.GetFileName(filePath));
-                Console.WriteLine("[Отладка] Файл добавлен в форму данных.");
-            }
-            catch (FileNotFoundException ex)
-            {
-                Console.WriteLine("[Ошибка] " + ex.Message);
-                throw;
-            }
-
-            var response = await _httpClient.PostAsync($"/api/movies/update/{movie.Id}", formData);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("[Ошибка] Произошла ошибка при добавлении фильма:");
-            Console.WriteLine(ex.Message);
-            Console.WriteLine(ex.StackTrace);
-            throw;
-        }
-    }
-
     public async Task<bool> DeleteMovie(int movieId)
     {
         return await DeleteAuthorizedAsync($"/api/movies/{movieId}");
     }
 
-    public async Task AddMovie(Movie movie, string filePath)
+    public async Task<Movie?> AddMovie(Movie movie, string filePath)
     {
         if (!Auth)
         {
@@ -352,6 +321,7 @@ public class ApiClient
         }
 
         using var formData = new MultipartFormDataContent();
+        FileStream fileStream = null;
 
         try
         {
@@ -364,19 +334,45 @@ public class ApiClient
             formData.Add(new StringContent(movie.age_rating.Id.ToString()), "age_rating_id");
             Console.WriteLine("[Отладка] Текстовые данные успешно добавлены.");
 
-            try
+            if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
             {
-                var photoContent = await GetPhotoContentAsync(filePath);
-                formData.Add(photoContent, "photo", Path.GetFileName(filePath));
+                Console.WriteLine($"[Отладка] Загружаем файл: {filePath}");
+                fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var streamContent = new StreamContent(fileStream);
+                formData.Add(streamContent, "photo", Path.GetFileName(filePath));
                 Console.WriteLine("[Отладка] Файл добавлен в форму данных.");
             }
-            catch (FileNotFoundException ex)
+            else
             {
-                Console.WriteLine("[Ошибка] " + ex.Message);
-                throw;
+                Console.WriteLine("[Предупреждение] Файл не найден или путь пуст. Фильм будет добавлен без изображения.");
             }
 
+            Console.WriteLine("[Отладка] Отправляем HTTP-запрос...");
             var response = await _httpClient.PostAsync("/api/movies/create", formData);
+
+            // Закрытие потока файла теперь гарантировано
+            if (fileStream != null)
+            {
+                Console.WriteLine("[Отладка] Закрываем поток файла...");
+                fileStream.Close();
+            }
+
+            Console.WriteLine($"[Отладка] Ответ от сервера: {(int)response.StatusCode} {response.StatusCode}");
+            var responseContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("[Отладка] Тело ответа:");
+            Console.WriteLine(responseContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("[Ошибка] Не удалось добавить фильм.");
+                throw new Exception($"Request failed with status code {response.StatusCode}. Response: {responseContent}");
+            }
+
+            Console.WriteLine("[Отладка] Десериализуем ответ...");
+            var result = JsonSerializer.Deserialize<Movie>(responseContent);
+            Console.WriteLine($"[Отладка] Фильм успешно добавлен: {result?.Title}");
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -385,8 +381,11 @@ public class ApiClient
             Console.WriteLine(ex.StackTrace);
             throw;
         }
+        finally
+        {
+            fileStream?.Dispose();
+        }
     }
-
     #endregion
 
     #region Actors
@@ -400,33 +399,156 @@ public class ApiClient
         return await GetAuthorizedAsync<Actor>($"/api/actors/{actorId}");
     }
 
-    public async Task<Actor?> CreateActor(Actor actor)
+    public async Task<Actor?> AddActor(Actor actor, string filePath)
     {
-        if (actor == null)
+        if (!Auth)
         {
-            throw new ArgumentNullException(nameof(actor));
+            Console.WriteLine("[Ошибка] Пользователь не аутентифицирован.");
+            throw new UnauthorizedAccessException("User is not authenticated.");
         }
 
-        // Проверка обязательных полей
-        if (string.IsNullOrEmpty(actor.FirstName) || string.IsNullOrEmpty(actor.LastName))
+        using var formData = new MultipartFormDataContent();
+        FileStream fileStream = null;
+
+        try
         {
-            throw new ArgumentException("Имя и фамилия актера обязательны для заполнения.");
+            Console.WriteLine("[Отладка] Добавляем текстовые данные актёра...");
+            formData.Add(new StringContent(actor.first_name), "first_name");
+            formData.Add(new StringContent(actor.last_name), "last_name");
+            formData.Add(new StringContent(actor.birth_date.ToString("yyyy-MM-dd")), "birth_date");
+            formData.Add(new StringContent(actor.biography ?? string.Empty), "biography");
+            Console.WriteLine("[Отладка] Текстовые данные успешно добавлены.");
+
+            if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+            {
+                Console.WriteLine($"[Отладка] Загружаем файл: {filePath}");
+                fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var streamContent = new StreamContent(fileStream);
+                formData.Add(streamContent, "photo", Path.GetFileName(filePath));
+                Console.WriteLine("[Отладка] Файл добавлен в форму данных.");
+            }
+            else
+            {
+                Console.WriteLine("[Предупреждение] Файл не найден или путь пуст. Актёр будет добавлен без изображения.");
+            }
+
+            Console.WriteLine("[Отладка] Отправляем HTTP-запрос...");
+            var response = await _httpClient.PostAsync("/api/actors", formData);
+
+            // Закрытие потока файла теперь гарантировано
+            if (fileStream != null)
+            {
+                Console.WriteLine("[Отладка] Закрываем поток файла...");
+                fileStream.Close();
+            }
+
+            Console.WriteLine($"[Отладка] Ответ от сервера: {(int)response.StatusCode} {response.StatusCode}");
+            var responseContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("[Отладка] Тело ответа:");
+            Console.WriteLine(responseContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("[Ошибка] Не удалось добавить актёра.");
+                throw new Exception($"Request failed with status code {response.StatusCode}. Response: {responseContent}");
+            }
+
+            Console.WriteLine("[Отладка] Десериализуем ответ...");
+            var result = JsonSerializer.Deserialize<Actor>(responseContent);
+            Console.WriteLine($"[Отладка] Актёр успешно добавлен: {result?.first_name} {result?.last_name}");
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[Ошибка] Произошла ошибка при добавлении актёра:");
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
+            throw;
+        }
+        finally
+        {
+            fileStream?.Dispose();
+        }
+    }
+
+    public async Task<Actor?> UpdateActor(Actor actor)
+    {
+        if (!Auth)
+        {
+            throw new UnauthorizedAccessException("User is not authenticated.");
         }
 
-        // Сериализация данных актера в JSON
-        var actorJson = JsonSerializer.Serialize(actor);
-        var content = new StringContent(actorJson, Encoding.UTF8, "application/json");
+        string filePath = actor.PhotoFilePath; // Предполагаем, что у актера есть путь к изображению, как у фильма
 
-        // Отправляем запрос
-        return await PostAuthorizedAsync<StringContent, Actor>("/api/actors", content);
+        using var formData = new MultipartFormDataContent();
+        FileStream fileStream = null;
+
+        try
+        {
+            // Добавляем текстовые данные актера в форму
+            Console.WriteLine("[Отладка] Добавляем данные актера...");
+            formData.Add(new StringContent(actor.first_name), "first_name");
+            formData.Add(new StringContent(actor.last_name), "last_name"); // Например, фамилия актера, если она есть
+            formData.Add(new StringContent(actor.birth_date.ToString("yyyy-MM-dd")), "birth_date");
+            formData.Add(new StringContent(actor.biography), "biography");
+            Console.WriteLine("[Отладка] Данные актера успешно добавлены.");
+
+            // Если есть фото, добавляем его
+            if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+            {
+                Console.WriteLine($"[Отладка] Загружаем файл: {filePath}");
+                fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var streamContent = new StreamContent(fileStream);
+                formData.Add(streamContent, "photo", Path.GetFileName(filePath));
+                Console.WriteLine("[Отладка] Фото актера добавлено в форму данных.");
+            }
+            else
+            {
+                Console.WriteLine("[Предупреждение] Фото не найдено или путь пуст. Актер будет обновлен без изменения фото.");
+            }
+
+            // Отправляем HTTP-запрос на обновление актера
+            Console.WriteLine("[Отладка] Отправляем HTTP-запрос для обновления актера...");
+            var response = await _httpClient.PostAsync($"/api/actors/update/{actor.Id}", formData);
+
+            Console.WriteLine($"[Отладка] Ответ от сервера: {(int)response.StatusCode} {response.StatusCode}");
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            // Сырой вывод ответа от сервера
+            Console.WriteLine("[Отладка] Сырой ответ от сервера:");
+            Console.WriteLine(responseContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("[Ошибка] Не удалось обновить актера.");
+                throw new Exception($"Request failed with status code {response.StatusCode}. Response: {responseContent}");
+            }
+
+            // Десериализуем ответ
+            Console.WriteLine("[Отладка] Десериализуем ответ...");
+            var result = JsonSerializer.Deserialize<Actor>(responseContent);
+            Console.WriteLine($"[Отладка] Актер успешно обновлен: {result?.first_name}");
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[Ошибка] Произошла ошибка при обновлении актера:");
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
+            throw;
+        }
+        finally
+        {
+            fileStream?.Dispose();
+        }
     }
 
-    public async Task<Actor?> UpdateActor(int actorId, Actor actor)
+    public async Task<bool> DeleteActor(int actorId)
     {
-        return await PostAuthorizedAsync<Actor, Actor>($"/api/actors/update/{actorId}", actor);
+        return await DeleteAuthorizedAsync($"/api/actors/{actorId}");
     }
-
-
 
 
     #endregion
@@ -453,9 +575,10 @@ public class ApiClient
         return await PostAuthorizedAsync<MovieRating, MovieRating>("/api/ratings", movieRating);
     }
 
-
-
-
+    public async Task<MovieRating?> UpdateMovieRating(int ratingId, MovieRating movieRating)
+    {
+        return await PostAuthorizedAsync<MovieRating, MovieRating>($"/api/ratings/{ratingId}", movieRating);
+    }
 
     #endregion
 
@@ -481,10 +604,10 @@ public class ApiClient
         return await PostAuthorizedAsync<Studio, Studio>("/api/studios", studio);
     }
 
-    public async Task<Studio?> UpdateStudio(int studioId, Studio studio)
+    public async Task<Studio?> UpdateStudio(Studio studio)
     {
         // Формируем URL для PUT-запроса с ID студии
-        var url = $"/api/studios/{studioId}";
+        var url = $"/api/studios/{studio.Id}";
 
         // Отправляем PUT-запрос с обновлённой студией
         return await PostAuthorizedAsync<Studio, Studio>(url, studio);

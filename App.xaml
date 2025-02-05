@@ -9,6 +9,20 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary>
+                <Style TargetType="Button">
+                    <Setter Property="BackgroundColor" Value="Transparent"/>
+                    <Setter Property="BorderColor" Value="Silver"/>
+                    <Setter Property="BorderWidth" Value="2"/>
+                    <Setter Property="TextColor" Value="Silver"/>
+                    <Setter Property="FontFamily" Value="Georgia"/>
+                    <Setter Property="FontSize" Value="18"/>
+                    <Setter Property="CornerRadius" Value="10"/>
+                    <Setter Property="Padding" Value="10,5"/>
+                </Style>
+            </ResourceDictionary>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

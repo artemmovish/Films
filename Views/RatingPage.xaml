@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Admin.Views.RatingPage"
+             xmlns:models="clr-namespace:Admin.Models"
+             xmlns:vm="clr-namespace:Admin.ViewModels"
+             Title="Отзывы">
+
+    <ContentPage.BindingContext>
+        <x:Static Member="vm:RatingViewModel.Instance"/>
+    </ContentPage.BindingContext>
+
+    <Grid Padding="5">
+        <ScrollView>
+            <CollectionView ItemsSource="{Binding MovieRatings}">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:MovieRating">
+                        <Frame>
+                            <StackLayout Padding="3">
+                                <Image Source="{Binding Movie.Photo}"/>
+                                <StackLayout>
+                                    <Label Text="Название фильма:"/>
+                                    <Label Text="{Binding Movie.Title}"/>
+                                </StackLayout>
+                                <StackLayout>
+                                    <Label Text="Пользователь:"/>
+                                    <Label Text="{Binding User.Email}"/>
+                                </StackLayout>
+                                <StackLayout>
+                                    <Label Text="Отзыв:"/>
+                                    <Label Text="{Binding ReviewText}"/>
+                                </StackLayout>
+                                <Grid>
+                                    <Button Text="Удалить" Grid.Column="4"
+                            Command="{Binding Source={x:Static vm:RatingViewModel.Instance}, Path=DeleteCommand}"
+                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </StackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+    </Grid>
+    
+</ContentPage>

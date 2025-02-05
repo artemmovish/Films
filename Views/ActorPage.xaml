@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Admin.Views.ActorPage"
+             xmlns:models="clr-namespace:Admin.Models"
+             xmlns:vm="clr-namespace:Admin.ViewModels"
+             Title="ActorPage">
+    
+    <ContentPage.BindingContext>
+        <x:Static Member="vm:ActorViewModel.Instance"/>
+    </ContentPage.BindingContext>
+
+    <Grid Padding="5">
+        <ScrollView>
+            <CollectionView ItemsSource="{Binding Actors}">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Actor">
+                        <Frame>
+                            <StackLayout Padding="3">
+                                <Image Source="{Binding PhotoFilePath}"/>
+                                <Entry Placeholder="FirstName" Text="{Binding first_name}"/>
+                                <Entry Placeholder="LastName" Text="{Binding last_name}"/>
+                                <DatePicker Date="{Binding birth_date}"/>
+                                <Entry Placeholder="Biography" Text="{Binding biography}"/>
+
+                                <Grid ColumnDefinitions="*,0.05*,0.3*,0.05*,*" Padding="10">
+                                    <Button Text="Сохранить" 
+                                            Command="{Binding Source={x:Static vm:ActorViewModel.Instance}, Path=AddCommand}"
+                                CommandParameter="{Binding}"/>
+                                    <Button Text="+" Grid.Column="2"
+                                Command="{Binding Source={x:Static vm:ActorViewModel.Instance}, Path=AddPhotoFilePathCommand}"
+                                CommandParameter="{Binding}"/>
+                                    <Button Text="Удалить" Grid.Column="4"
+                                Command="{Binding Source={x:Static vm:ActorViewModel.Instance}, Path=DeleteCommand}"
+                                CommandParameter="{Binding}"/>
+                                </Grid>
+                            </StackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

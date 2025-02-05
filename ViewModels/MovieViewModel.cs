@@ -16,6 +16,11 @@ namespace Admin.ViewModels
 
         public static MovieViewModel Instance => _instance.Value;
 
+        private MovieViewModel()
+        {
+
+        }
+
         [ObservableProperty]
         ObservableCollection<Movie> movies;
 
@@ -24,10 +29,6 @@ namespace Admin.ViewModels
 
         [ObservableProperty]
         ObservableCollection<AgeRating> ageRatings;
-
-        private MovieViewModel()
-        {
-        }
 
         public async Task InitializeAsync()
         {
@@ -113,7 +114,7 @@ namespace Admin.ViewModels
                 LoadData();
                 return;
             }
-            await client.UpdateMovie(item, item.Photo);
+            await client.UpdateMovie(item);
 
             LoadData();
         }

@@ -7,18 +7,17 @@ namespace Admin.Models
     {
         public int Id { get; set; }
 
-        [JsonPropertyName("first_name")]
-        public string? FirstName { get; set; }
+        public string first_name { get; set; } = string.Empty;
 
-        [JsonPropertyName("last_name")]
-        public string? LastName { get; set; }
+        public string last_name { get; set; } = string.Empty;
 
         [JsonPropertyName("birth_date")]
-        public DateTime BirthDate { get; set; }
+        public DateTime birth_date { get; set; }
 
         [JsonPropertyName("biography")]
-        public string? Biography { get; set; }
+        public string? biography { get; set; }
 
+        [JsonPropertyName("photo")]
         public string? PhotoFilePath { get; set; }
     }
 }
