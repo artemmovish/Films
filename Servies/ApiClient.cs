@@ -18,7 +18,7 @@ public class ApiClient
     static private readonly HttpClient _httpClient;
     static private string? _token;
     static public bool Auth { get; private set; } = false;
-    static public string baseUrl = "https://e49a2f2d-40ad-439e-a9c7-254f63886ec6.tunnel4.com";
+    static public string baseUrl = "https://6e19480a-11ef-4a5a-a3f1-2ff78176e6bc.tunnel4.com";
 
     static ApiClient()
     {

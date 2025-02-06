@@ -4,7 +4,7 @@
              x:Class="Admin.Views.ActorPage"
              xmlns:models="clr-namespace:Admin.Models"
              xmlns:vm="clr-namespace:Admin.ViewModels"
-             Title="ActorPage">
+             Title="Актеры">
     
     <ContentPage.BindingContext>
         <x:Static Member="vm:ActorViewModel.Instance"/>
