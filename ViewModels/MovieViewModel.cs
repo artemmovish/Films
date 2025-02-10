@@ -28,6 +28,12 @@ namespace Admin.ViewModels
         ObservableCollection<Studio> studios;
 
         [ObservableProperty]
+        ObservableCollection<Genre> genres;
+
+        [ObservableProperty]
+        ObservableCollection<Genre> selectedGenre;
+
+        [ObservableProperty]
         ObservableCollection<AgeRating> ageRatings;
 
         public async Task InitializeAsync()
@@ -43,6 +49,9 @@ namespace Admin.ViewModels
             {
                 await client.Login();
             }
+
+            var genreResponse = await client.GetGenres();
+            this.Genres = new ObservableCollection<Genre>(genreResponse);
 
             var studioResponse = await client.GetStudios();
             Studios = new ObservableCollection<Studio>(studioResponse);

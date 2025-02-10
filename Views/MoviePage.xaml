@@ -22,9 +22,29 @@
                             <StackLayout Padding="3">
                                 <Image Source="{Binding Photo}"/>
                                 <Entry Placeholder="Title" Text="{Binding Title}"/>
-                                <Entry Placeholder="ReleaseYear" Text="{Binding Release_Year}" Keyboard="Numeric"/>
+                                <Entry Placeholder="ReleaseYear" Text="{Binding release_year}" Keyboard="Numeric"/>
                                 <Entry Placeholder="Duration" Text="{Binding Duration}" Keyboard="Numeric"/>
                                 <Entry Placeholder="Description" Text="{Binding Description}"/>
+                                <Entry Placeholder="Url" Text="{Binding watch_url}"/>
+
+                                <CollectionView ItemsSource="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=Genres}"
+                                                SelectionMode="Multiple"
+                                                SelectedItems="{Binding genres}" 
+                                                Margin="10">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="{x:Type models:Genre}">
+                                            <Frame Padding="8" Margin="5" CornerRadius="10" BackgroundColor="LightGray"
+                                                   InputTransparent="True">
+                                                <Label Text="{Binding Name}" 
+                                                       FontSize="16" 
+                                                       TextColor="Black"
+                                                       VerticalOptions="Center"/>
+                                            </Frame>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+
+
 
                                 <Picker Title="Выберите Студию"
                                 ItemsSource="{Binding Source={x:Static vm:MovieViewModel.Instance}, Path=Studios}"

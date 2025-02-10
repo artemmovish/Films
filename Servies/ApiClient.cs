@@ -18,7 +18,7 @@ public class ApiClient
     static private readonly HttpClient _httpClient;
     static private string? _token;
     static public bool Auth { get; private set; } = false;
-    static public string baseUrl = "https://31a1479d-f9d7-4c23-ad50-3d5349292c4c.tunnel4.com";
+    static public string baseUrl = "https://604e240e-8695-4736-b61d-3fc725873214.tunnel4.com";
 
     static ApiClient()
     {
@@ -188,8 +188,8 @@ public class ApiClient
     {
         ApiRequestAdmin request = new ApiRequestAdmin();
 
-        request.Email = "AdminApp@example.com";
-        request.Password = "AdminApp";
+        request.Email = "artem@gmail.com";
+        request.Password = "12345678";
 
         var token = await PostAsync<ApiRequestAdmin, AuthResponse>("/api/login", request);
         if (token?.Token != null)
@@ -248,7 +248,7 @@ public class ApiClient
         {
             Console.WriteLine("[Отладка] Добавляем текстовые данные фильма...");
             formData.Add(new StringContent(movie.Title), "title");
-            formData.Add(new StringContent(movie.Release_Year.ToString()), "release_year");
+            formData.Add(new StringContent(movie.release_year.ToString()), "release_year");
             formData.Add(new StringContent(movie.Duration.ToString()), "duration");
             formData.Add(new StringContent(movie.Description), "description");
             formData.Add(new StringContent(movie.Studio.Id.ToString()), "studio_id");
@@ -315,71 +315,50 @@ public class ApiClient
     public async Task<Movie?> AddMovie(Movie movie, string filePath)
     {
         if (!Auth)
-        {
-            Console.WriteLine("[Ошибка] Пользователь не аутентифицирован.");
             throw new UnauthorizedAccessException("User is not authenticated.");
-        }
 
         using var formData = new MultipartFormDataContent();
         FileStream fileStream = null;
 
         try
         {
-            Console.WriteLine("[Отладка] Добавляем текстовые данные фильма...");
             formData.Add(new StringContent(movie.Title), "title");
-            formData.Add(new StringContent(movie.Release_Year.ToString()), "release_year");
+            formData.Add(new StringContent(movie.release_year.ToString()), "release_year");
             formData.Add(new StringContent(movie.Duration.ToString()), "duration");
             formData.Add(new StringContent(movie.Description), "description");
             formData.Add(new StringContent(movie.Studio.Id.ToString()), "studio_id");
             formData.Add(new StringContent(movie.age_rating.Id.ToString()), "age_rating_id");
-            Console.WriteLine("[Отладка] Текстовые данные успешно добавлены.");
 
+            // Добавляем ссылку на фильм, если она есть
+            if (!string.IsNullOrEmpty(movie.watch_url))
+            {
+                formData.Add(new StringContent(movie.watch_url), "watch_url");
+            }
+
+            // Добавляем жанры, если они есть
+            if (movie.genres != null && movie.genres.Any())
+            {
+                foreach (var genre in movie.genres)
+                    formData.Add(new StringContent(genre.Id.ToString()), "genres[]");
+            }
+
+            // Добавляем файл, если путь указан и файл существует
             if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
             {
-                Console.WriteLine($"[Отладка] Загружаем файл: {filePath}");
                 fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var streamContent = new StreamContent(fileStream);
-                formData.Add(streamContent, "photo", Path.GetFileName(filePath));
-                Console.WriteLine("[Отладка] Файл добавлен в форму данных.");
-            }
-            else
-            {
-                Console.WriteLine("[Предупреждение] Файл не найден или путь пуст. Фильм будет добавлен без изображения.");
+                formData.Add(new StreamContent(fileStream), "photo", Path.GetFileName(filePath));
             }
 
-            Console.WriteLine("[Отладка] Отправляем HTTP-запрос...");
+            // Отправляем запрос
             var response = await _httpClient.PostAsync("/api/movies/create", formData);
 
-            // Закрытие потока файла теперь гарантировано
-            if (fileStream != null)
-            {
-                Console.WriteLine("[Отладка] Закрываем поток файла...");
-                fileStream.Close();
-            }
+            fileStream?.Close();
 
-            Console.WriteLine($"[Отладка] Ответ от сервера: {(int)response.StatusCode} {response.StatusCode}");
             var responseContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("[Отладка] Тело ответа:");
-            Console.WriteLine(responseContent);
-
             if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine("[Ошибка] Не удалось добавить фильм.");
                 throw new Exception($"Request failed with status code {response.StatusCode}. Response: {responseContent}");
-            }
 
-            Console.WriteLine("[Отладка] Десериализуем ответ...");
-            var result = JsonSerializer.Deserialize<Movie>(responseContent);
-            Console.WriteLine($"[Отладка] Фильм успешно добавлен: {result?.Title}");
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("[Ошибка] Произошла ошибка при добавлении фильма:");
-            Console.WriteLine(ex.Message);
-            Console.WriteLine(ex.StackTrace);
-            throw;
+            return JsonSerializer.Deserialize<Movie>(responseContent);
         }
         finally
         {
